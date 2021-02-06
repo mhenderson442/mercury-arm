@@ -1,0 +1,102 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "environment": {
+            "type": "string",
+            "metadata": {
+                "description": "Resource deployment environment."
+            },
+            "allowedValues": [ "devl", "qual", "prod" ],
+            "defaultValue": "devl"
+        },
+        "utc": {
+            "type": "string",
+            "metadata": {
+                "description": "Current time stamp"
+            },
+            "defaultValue": "[utcNow('yyyyMMddTHHmmss')]"
+        }
+    },
+    "functions": [
+        {
+            "namespace": "mars",
+            "members": {
+                "resourceNamePrefix": {
+                    "parameters": [
+                        {
+                            "name": "resourceGroupName",
+                            "type": "string"
+                        },
+                        {
+                            "name": "environment",
+                            "type": "string"
+                        },
+                        {
+                            "name": "resourceType",
+                            "type": "string"
+                        }
+                    ],
+                    "output": {
+                        "value": "[concat(parameters('resourceGroupName'),'-', parameters('environment'), '-', parameters('resourceType'), '-')]",
+                        "type": "string"
+                    }
+                },
+                "formatDeploymentName": {
+                    "parameters": [
+                        {
+                            "name": "resourceGroupName",
+                            "type": "string"
+                        },
+                        {
+                            "name": "environment",
+                            "type": "string"
+                        },
+                        {
+                            "name": "resourceType",
+                            "type": "string"
+                        },
+                        {
+                            "name": "utc",
+                            "type": "string"
+                        }
+                    ],
+                    "output": {
+                        "value": "[concat(parameters('resourceGroupName'), '-', parameters('environment'),'-', parameters('resourceType'), '-deployment-', parameters('utc'))]",
+                        "type": "string"
+                    }
+                }
+            }
+        }
+    ],
+    "variables": {
+        "resourceType": {
+            "virtualNetwork": "vnet"
+        },
+        "vnetDeployment": "[mars.formatDeploymentName(resourceGroup().name, parameters('environment'), variables('resourceType').virtualNetwork , parameters('utc'))]"
+    },
+    "resources": [
+        {
+            "name": "[variables('vnetDeployment')]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-06-01",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "resourceNamePrefix": {
+                        "value": "[mars.resourceNamePrefix(resourceGroup().name, parameters('environment'), variables('resourceType').virtualNetwork)]"
+                    }
+                },
+                "templateLink": {
+                    "relativePath": "./vnet/virtual-network-template.json"
+                }
+            }
+        }
+    ],
+    "outputs": {
+        "virtualNetworkId": {
+            "type": "string",
+            "value": "[reference(variables('vnetDeployment')).outputs.virtualNetworkId.value]"
+        }
+    }
+}

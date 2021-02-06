@@ -1,0 +1,54 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "resourceNamePrefix": {
+            "type": "string",
+            "metadata": {
+                "description": "description"
+            }
+        }
+    },
+    "functions": [],
+    "variables": {
+        "virtualNetworkName": "[concat(parameters('resourceNamePrefix'),'000')]"
+    },
+    "resources": [
+        {
+            "name": "[variables('virtualNetworkName')]",
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2020-05-01",
+            "location": "[resourceGroup().location]",
+            "tags": {
+                "displayName": "[variables('virtualNetworkName')]"
+            },
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "10.0.0.0/16"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "Subnet-1",
+                        "properties": {
+                            "addressPrefix": "10.0.0.0/24"
+                        }
+                    },
+                    {
+                        "name": "Subnet-2",
+                        "properties": {
+                            "addressPrefix": "10.0.1.0/24"
+                        }
+                    }
+                ]
+            }
+        }
+        ],
+    "outputs": {
+        "virtualNetworkId": {
+            "type": "string",
+            "value": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+        }
+    }
+}
