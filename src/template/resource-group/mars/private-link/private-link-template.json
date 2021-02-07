@@ -1,0 +1,58 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "resourceNamePrefix": {
+            "type": "string",
+            "metadata": {
+                "description": "Resource name prefix"
+            }
+        },
+        "priveteLinkType": {
+            "type": "string",
+            "metadata": {
+                "description": "Type of service privste link will connect to."
+            },
+            "allowedValues": [
+                "storage",
+                "sql",
+                "web"
+            ]
+        },
+        "subnetId": {
+            "type": "string",
+            "metadata": {
+                "description": "description"
+            }
+        }
+
+    },
+    "functions": [],
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.Network/privateLinkServices",
+            "apiVersion": "2020-05-01",
+            "location": "[resourceGroup().location]",
+            "name": "[concat(parameters('resourceNamePrefix'), 'private-link-', parameters('priveteLinkType'))]",
+            "properties": {
+                "autoApproval": {
+                    "subscriptions": ["[subscription().id]"]
+                },
+                "ipConfigurations": [
+
+                    {
+                        "name": "[concat(parameters('priveteLinkType'),'SubnetConfiguration')]", 
+                        "properties": {
+                            "subnet": {
+                                "id": "[parameters('subnetId')]"
+                            },
+                            "privateIPAllocationMethod": "Dynamic"
+                        }
+                    }
+                ]
+            }
+        }
+    ],
+    "outputs": {}
+}

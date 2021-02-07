@@ -5,13 +5,15 @@
         "resourceNamePrefix": {
             "type": "string",
             "metadata": {
-                "description": "description"
+                "description": "Resource name prefix"
             }
         }
     },
     "functions": [],
     "variables": {
-        "virtualNetworkName": "[concat(parameters('resourceNamePrefix'),'000')]"
+        "virtualNetworkName": "[concat(parameters('resourceNamePrefix'),'000')]",
+        "storageSubnetName": "Storage-Subnet",
+        "defaultSubnetName": "Default-Subnet"
     },
     "resources": [
         {
@@ -30,25 +32,40 @@
                 },
                 "subnets": [
                     {
-                        "name": "Subnet-1",
+                        "name": "[variables('defaultSubnetName')]",
                         "properties": {
-                            "addressPrefix": "10.0.0.0/24"
+                            "addressPrefix": "10.0.0.0/24",
+                            "serviceEndpoints": [
+                                {
+                                    "service": "Microsoft.Storage",
+                                    "locations": [ "northcentralus", "southcentralus" ]
+                                }
+                            ],
+                            "delegations": [],
+                            "privateEndpointNetworkPolicies": "Disabled",
+                            "privateLinkServiceNetworkPolicies": "Disabled"
                         }
                     },
                     {
-                        "name": "Subnet-2",
+                        "name": "[variables('storageSubnetName')]",
                         "properties": {
-                            "addressPrefix": "10.0.1.0/24"
+                            "addressPrefix": "10.0.1.0/24",
+                            "privateEndpointNetworkPolicies": "Disabled",
+                            "privateLinkServiceNetworkPolicies": "Disabled"
                         }
                     }
                 ]
             }
         }
-        ],
+    ],
     "outputs": {
         "virtualNetworkId": {
             "type": "string",
             "value": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+        },
+        "storageSubnetId": {
+            "type": "string",
+            "value": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName')), '/subnets/', variables('storageSubnetName'))]"
         }
     }
 }

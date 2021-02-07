@@ -70,10 +70,35 @@
         }
     ],
     "variables": {
-        "resourceType": {
-            "virtualNetwork": "vnet"
+
+        "nicStorageDeployment": "[mars.formatDeploymentName(resourceGroup().name, parameters('environment'), variables('resourceType').nic , parameters('utc'))]",
+        "nicStorageNamePrefix": "[mars.resourceNamePrefix(resourceGroup().name, parameters('environment'), variables('resourceType').nic)]",
+
+        "privateDnsZoneDeployment": "[mars.formatDeploymentName(resourceGroup().name, parameters('environment'), variables('resourceType').privateDns , parameters('utc'))]",
+        "privateDnsZoneNamePrefix": "[mars.resourceNamePrefix(resourceGroup().name, parameters('environment'), variables('resourceType').privateDns)]",
+
+        "resourceReferenceType": {
+            "storage": "storage",
+            "sql": "sql",
+            "web": "web"
         },
-        "vnetDeployment": "[mars.formatDeploymentName(resourceGroup().name, parameters('environment'), variables('resourceType').virtualNetwork , parameters('utc'))]"
+        "resourceType": {
+            "virtualNetwork": "vnet",
+            "storageAccount": "storage",
+            "privateLink": "private-link",
+            "privateDns": "private-dns",
+            "nic": "nic",
+            "privateEndpoint": "private-endpoint"
+        },
+
+        "storageAccountResourceNamePrefix": "[mars.resourceNamePrefix(resourceGroup().name, parameters('environment'), variables('resourceType').storageAccount)]",
+        "storageAccountDeployment": "[mars.formatDeploymentName(resourceGroup().name, parameters('environment'), variables('resourceType').storageAccount , parameters('utc'))]",
+
+        "storagePrivateEndpointDeployment": "[mars.formatDeploymentName(resourceGroup().name, parameters('environment'), variables('resourceType').privateEndpoint , parameters('utc'))]",
+        "storagePrivateEndpointNamePrefix": "[mars.resourceNamePrefix(resourceGroup().name, parameters('environment'), variables('resourceType').privateEndpoint)]",
+
+        "vnetDeployment": "[mars.formatDeploymentName(resourceGroup().name, parameters('environment'), variables('resourceType').virtualNetwork , parameters('utc'))]",
+        "vnetResourceNamePrefix": "[mars.resourceNamePrefix(resourceGroup().name, parameters('environment'), variables('resourceType').virtualNetwork)]"
     },
     "resources": [
         {
@@ -84,11 +109,113 @@
                 "mode": "Incremental",
                 "parameters": {
                     "resourceNamePrefix": {
-                        "value": "[mars.resourceNamePrefix(resourceGroup().name, parameters('environment'), variables('resourceType').virtualNetwork)]"
+                        "value": "[variables('vnetResourceNamePrefix')]"
                     }
                 },
                 "templateLink": {
                     "relativePath": "./vnet/virtual-network-template.json"
+                }
+            }
+        },
+        {
+            "name": "[variables('storageAccountDeployment')]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-06-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments', variables('vnetDeployment'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "resourceNamePrefix": {
+                        "value": "[variables('storageAccountResourceNamePrefix')]"
+                    },
+                    "storageSubnetId": {
+                        "value": "[reference(variables('vnetDeployment')).outputs.storageSubnetId.value]"
+                    }
+                },
+                "templateLink": {
+                    "relativePath": "./storage/storage-account-template.json"
+                }
+            }
+        },
+        {
+            "name": "[variables('privateDnsZoneDeployment')]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-06-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments', variables('vnetDeployment'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "resourceNamePrefix": {
+                        "value": "[variables('privateDnsZoneNamePrefix')]"
+                    }
+                },
+                "templateLink": {
+                    "relativePath": "./private-dns-zone/private-dns-zone-template.json"
+                }
+            }
+        },
+        {
+            "name": "[variables('nicStorageDeployment')]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-06-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments', variables('vnetDeployment'))]",
+                "[resourceId('Microsoft.Resources/deployments', variables('storageAccountDeployment'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "resourceName": {
+                        "value": "[coalesce(variables('nicStorageNamePrefix'),variables('resourceReferenceType').storage,'000')]"
+                    },
+                    "subnetId": {
+                        "value": "[reference(variables('vnetDeployment')).outputs.storageSubnetId.value]"
+                    },
+                    "instance": {
+                        "value": "000"
+                    },
+                    "ipConfigNamePrefix": {
+                        "value": "blob-blob."
+                    }
+                },
+                "templateLink": {
+                    "relativePath": "./nic/nic-template.json"
+                }
+            }
+        },
+        {
+            "name": "[variables('storagePrivateEndpointDeployment')]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-06-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments', variables('vnetDeployment'))]",
+                "[resourceId('Microsoft.Resources/deployments', variables('storageAccountDeployment'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "resourceNamePrefix": {
+                        "value": "[variables('storagePrivateEndpointNamePrefix')]"
+                    },
+                    "storageAccountId": {
+                        "value": "[reference(variables('storageAccountDeployment')).outputs.storageAccountId.value]"
+                    },
+                    "instance": {
+                        "value": "000"
+                    },
+                    "resourceReferenceType": {
+                        "value": "[variables('resourceReferenceType').storage]"
+                    },
+                    "storageSubnetId":{
+                        "value": "[reference(variables('vnetDeployment')).outputs.storageSubnetId.value]"
+                    }
+                },
+                "templateLink": {
+                    "relativePath": "./private-endpoint/private-endpoint-template.json"
                 }
             }
         }
@@ -97,6 +224,18 @@
         "virtualNetworkId": {
             "type": "string",
             "value": "[reference(variables('vnetDeployment')).outputs.virtualNetworkId.value]"
+        },
+        "storageSubnetId": {
+            "type": "string",
+            "value": "[reference(variables('vnetDeployment')).outputs.storageSubnetId.value]"
+        },
+        "privateDnsId": {
+            "type": "string",
+            "value": "[reference(variables('privateDnsZoneDeployment')).outputs.privateDnsId.value]"
+        },
+        "nicId": {
+            "type": "string",
+            "value": "[reference(variables('nicStorageDeployment')).outputs.nicId.value]"
         }
     }
 }

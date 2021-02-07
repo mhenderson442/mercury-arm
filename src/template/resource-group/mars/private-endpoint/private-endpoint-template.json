@@ -1,0 +1,75 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "resourceNamePrefix": {
+            "type": "string",
+            "metadata": {
+                "description": "Resource name prefix"
+            }
+        },
+        "storageAccountId": {
+            "type": "string",
+            "metadata": {
+                "description": "Storeage account resource Id."
+            }
+        },
+        "storageSubnetId": {
+            "type": "string",
+            "metadata": {
+                "description": "Storage subnet resource id."
+            }
+        },
+        "instance": {
+            "type": "string",
+            "metadata": {
+                "description": "Instance iteration reference"
+            },
+            "defaultValue": "000"
+        },
+        "resourceReferenceType": {
+            "type": "string",
+            "metadata": {
+                "description": "Resource type references in the link."
+            },
+            "allowedValues": [ "storage", "web", "sql" ],
+            "defaultValue": "storage"
+        }
+    },
+    "functions": [],
+    "variables": {
+        "resourceName": "[concat(parameters('resourceNamePrefix'), parameters('resourceReferenceType'),'-', parameters('instance'))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Network/privateEndpoints",
+            "apiVersion": "2020-05-01",
+            "location": "[resourceGroup().location]",
+            "name": "[variables('resourceName')]",
+            "properties": {
+                "privateLinkServiceConnections": [
+                    {
+                        "name": "[variables('resourceName')]",
+                        "properties": {
+                            "privateLinkServiceId": "[parameters('storageAccountId')]",
+                            "groupIds": [
+                                "blob"
+                            ],
+                            "privateLinkServiceConnectionState": {
+                                "status": "Approved",
+                                "description": "Auto-Approved",
+                                "actionsRequired": "None"
+                            }
+                        }
+                    }
+                ],
+                "manualPrivateLinkServiceConnections": [],
+                "subnet": {
+                    "id": "[parameters('storageSubnetId')]"
+                },
+                "customDnsConfigs": []
+            }
+        }
+    ],
+    "outputs": {}
+}

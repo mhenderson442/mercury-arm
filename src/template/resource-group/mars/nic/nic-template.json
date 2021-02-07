@@ -1,0 +1,71 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "resourceName": {
+            "type": "string",
+            "metadata": {
+                "description": "Resource Name"
+            }
+        },
+        "subnetId": {
+            "type": "string",
+            "metadata": {
+                "description": "Subnet resource id/"
+            }
+        },
+        "instance": {
+            "type": "string",
+            "metadata": {
+                "description": "Instance designator"
+            },
+            "defaultValue": "000"
+        },
+        "ipConfigNamePrefix": {
+            "type": "string",
+            "metadata": {
+                "description": "IP configuration name prefix."
+            },
+            "defaultValue": "blob-blob."
+        }
+    },
+    "functions": [],
+    "variables": {
+        "ipConfigName": "[concat(parameters('ipConfigNamePrefix'), parameters('resourceName'), parameters('instance'))]",
+        "resourceName": "[concat(parameters('resourceName'),parameters('instance'))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2020-05-01",
+            "location": "[resourceGroup().location]",
+            "name": "[variables('resourceName')]",
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "[variables('ipConfigName')]",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[parameters('subnetId')]"
+                            },
+                            "primary": true,
+                            "privateIPAddressVersion": "IPv4"
+                        }
+                    }
+                ],
+                "dnsSettings": {
+                    "dnsServers": []
+                },
+                "enableAcceleratedNetworking": false,
+                "enableIPForwarding": false
+            }
+        }
+    ],
+    "outputs": {
+        "nicId": {
+            "type": "string",
+            "value": "[resourceId('Microsoft.Network/networkInterfaces', parameters('resourceName'))]"
+        }
+    }
+}
