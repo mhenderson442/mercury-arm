@@ -4,6 +4,9 @@
     "parameters": {
         "resourceNamePrefix": {
             "value": "default" 
+        },
+        "databaseName": {
+            "value": "default"
         }
     }
 }

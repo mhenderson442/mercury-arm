@@ -5,48 +5,66 @@
         "resourceNamePrefix": {
             "type": "string",
             "metadata": {
-                "description": "Cosmos Db name prefix."
+                "description": "Cosmos Db account name prefix."
+            }
+        },
+        "databaseName": {
+            "type": "string",
+            "metadata": {
+                "description": "Namae of Cosmos Db database"
             }
         }
     },
     "functions": [],
     "variables": {
-        "resourceName": "[concat(parameters('resourceNamePrefix'),'cosmos-db-000')]"
+        "accountName": "[concat(parameters('resourceNamePrefix'),'cosmos-db-000')]",
+        "databaseResourceName": "[concat(variables('accountName'), '/', parameters('databaseName'))]"
     },
     "resources": [
- {
-     "name": "[variables('resourceName')]",
-     "type": "Microsoft.DocumentDB/databaseAccounts",
-     "apiVersion": "2020-06-01-preview",
-     "location": "[resourceGroup().location]",
-     "tags": {
-     },
-     "kind": "GlobalDocumentDB",
-     "properties": {
-         "createMode": "Default",
-         "consistencyPolicy": {
-             "defaultConsistencyLevel": "Session"
-         },
-         "locations": [
-             {
-                 "locationName": "[resourceGroup().location]",
-                 "failoverPriority": 0
-             }
-         ],
-         "enableFreeTier": true,
-         "databaseAccountOfferType": "Standard",
-         "capabilities": [
-             {
-                 "name": "EnableTable"
-             }
-         ]
-     }
- }
+        {
+            "name": "[variables('accountName')]",
+            "type": "Microsoft.DocumentDB/databaseAccounts",
+            "apiVersion": "2020-06-01-preview",
+            "location": "[resourceGroup().location]",
+            "tags": {
+            },
+            "kind": "GlobalDocumentDB",
+            "properties": {
+                "createMode": "Default",
+                "consistencyPolicy": {
+                    "defaultConsistencyLevel": "Session"
+                },
+                "databaseAccountOfferType": "Standard",
+                "locations": [
+                    {
+                        "locationName": "[resourceGroup().location]",
+                        "failoverPriority": 0
+                    }
+                ],
+                "enableFreeTier": true
+            }
+        },
+        {
+            "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases",
+            "name": "[variables('databaseResourceName')]",
+            "apiVersion": "2020-06-01-preview",
+            "dependsOn": [
+                "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('accountName'))]"
+            ],
+            "properties": {
+                "resource": {
+                    "id": "[parameters('databaseName')]"
+                },
+                "options": {
+                    "throughput": 400
+                }
+            }
+        }
     ],
     "outputs": {
         "cosmosDbRescourceId": {
             "type": "string",
-            "value": "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('resourceName'))]"
+            "value": "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('accountName'))]"
         }
     }
 }

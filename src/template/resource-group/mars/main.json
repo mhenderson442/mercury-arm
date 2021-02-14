@@ -232,6 +232,9 @@
                 "parameters": {
                     "resourceNamePrefix": {
                         "value": "[variables('cosmosDbNamePrefix')]"
+                    },
+                    "databaseName":{
+                        "value": "readings"
                     }
                 },
                 "templateLink": {
