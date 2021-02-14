@@ -88,7 +88,8 @@
             "privateLink": "private-link",
             "privateDns": "private-dns",
             "nic": "nic",
-            "privateEndpoint": "private-endpoint"
+            "privateEndpoint": "private-endpoint",
+            "cosmosDb": "cosmos-db"
         },
 
         "storageAccountResourceNamePrefix": "[mars.resourceNamePrefix(resourceGroup().name, parameters('environment'), variables('resourceType').storageAccount)]",
@@ -96,6 +97,9 @@
 
         "storagePrivateEndpointDeployment": "[mars.formatDeploymentName(resourceGroup().name, parameters('environment'), variables('resourceType').privateEndpoint , parameters('utc'))]",
         "storagePrivateEndpointNamePrefix": "[mars.resourceNamePrefix(resourceGroup().name, parameters('environment'), variables('resourceType').privateEndpoint)]",
+
+        "cosmosDbDeployment": "[mars.formatDeploymentName(resourceGroup().name, parameters('environment'), variables('resourceType').cosmosDb , parameters('utc'))]",
+        "cosmosDbNamePrefix": "[mars.resourceNamePrefix(resourceGroup().name, parameters('environment'), variables('resourceType').cosmosDb)]",
 
         "vnetDeployment": "[mars.formatDeploymentName(resourceGroup().name, parameters('environment'), variables('resourceType').virtualNetwork , parameters('utc'))]",
         "vnetResourceNamePrefix": "[mars.resourceNamePrefix(resourceGroup().name, parameters('environment'), variables('resourceType').virtualNetwork)]"
@@ -210,7 +214,7 @@
                     "resourceReferenceType": {
                         "value": "[variables('resourceReferenceType').storage]"
                     },
-                    "storageSubnetId":{
+                    "storageSubnetId": {
                         "value": "[reference(variables('vnetDeployment')).outputs.storageSubnetId.value]"
                     }
                 },
@@ -218,24 +222,28 @@
                     "relativePath": "./private-endpoint/private-endpoint-template.json"
                 }
             }
+        },
+        {
+            "name": "[variables('cosmosDbDeployment')]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-06-01",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "resourceNamePrefix": {
+                        "value": "[variables('cosmosDbNamePrefix')]"
+                    }
+                },
+                "templateLink": {
+                    "relativePath": "./cosmos-db/cosmos-db-template.json"
+                }
+            }
         }
     ],
     "outputs": {
-        "virtualNetworkId": {
+        "cosmosDbRescourceId": {
             "type": "string",
-            "value": "[reference(variables('vnetDeployment')).outputs.virtualNetworkId.value]"
-        },
-        "storageSubnetId": {
-            "type": "string",
-            "value": "[reference(variables('vnetDeployment')).outputs.storageSubnetId.value]"
-        },
-        "privateDnsId": {
-            "type": "string",
-            "value": "[reference(variables('privateDnsZoneDeployment')).outputs.privateDnsId.value]"
-        },
-        "nicId": {
-            "type": "string",
-            "value": "[reference(variables('nicStorageDeployment')).outputs.nicId.value]"
+            "value": "[reference(variables('cosmosDbDeployment')).outputs.cosmosDbRescourceId.value]"
         }
     }
 }

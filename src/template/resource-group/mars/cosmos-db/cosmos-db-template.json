@@ -1,0 +1,52 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "resourceNamePrefix": {
+            "type": "string",
+            "metadata": {
+                "description": "Cosmos Db name prefix."
+            }
+        }
+    },
+    "functions": [],
+    "variables": {
+        "resourceName": "[concat(parameters('resourceNamePrefix'),'cosmos-db-000')]"
+    },
+    "resources": [
+ {
+     "name": "[variables('resourceName')]",
+     "type": "Microsoft.DocumentDB/databaseAccounts",
+     "apiVersion": "2020-06-01-preview",
+     "location": "[resourceGroup().location]",
+     "tags": {
+     },
+     "kind": "GlobalDocumentDB",
+     "properties": {
+         "createMode": "Default",
+         "consistencyPolicy": {
+             "defaultConsistencyLevel": "Session"
+         },
+         "locations": [
+             {
+                 "locationName": "[resourceGroup().location]",
+                 "failoverPriority": 0
+             }
+         ],
+         "enableFreeTier": true,
+         "databaseAccountOfferType": "Standard",
+         "capabilities": [
+             {
+                 "name": "EnableTable"
+             }
+         ]
+     }
+ }
+    ],
+    "outputs": {
+        "cosmosDbRescourceId": {
+            "type": "string",
+            "value": "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('resourceName'))]"
+        }
+    }
+}
