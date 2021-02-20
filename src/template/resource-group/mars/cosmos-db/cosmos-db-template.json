@@ -11,13 +11,13 @@
         "databaseName": {
             "type": "string",
             "metadata": {
-                "description": "Namae of Cosmos Db database"
+                "description": "Name of Cosmos Db database"
             }
         }
     },
     "functions": [],
     "variables": {
-        "accountName": "[concat(parameters('resourceNamePrefix'),'cosmos-db-000')]",
+        "accountName": "[concat(parameters('resourceNamePrefix'),'000')]",
         "databaseResourceName": "[concat(variables('accountName'), '/', parameters('databaseName'))]"
     },
     "resources": [

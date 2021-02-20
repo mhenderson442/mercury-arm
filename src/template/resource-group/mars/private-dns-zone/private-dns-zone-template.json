@@ -7,6 +7,12 @@
             "metadata": {
                 "description": "Private DNS name prefix."
             }
+        },
+        "virtualNetworkId": {
+            "type": "string",
+            "metadata": {
+                "description": "description"
+            }
         }
     },
     "functions": [],
@@ -27,6 +33,21 @@
                 "numberOfVirtualNetworkLinks": 1,
                 "numberOfVirtualNetworkLinksWithRegistration": 0,
                 "provisioningState": "Succeeded"
+            }
+        },
+        {
+            "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+            "apiVersion": "2018-09-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', variables('privateDnsZoneName'))]"
+            ],
+            "location": "global",
+            "name": "[concat(variables('privateDnsZoneName'), '/mars-devl-venet-link')]",
+            "properties": {
+                "registrationEnabled": true,
+                "virtualNetwork": {
+                    "id": "[parameters('virtualNetworkId')]"
+                }
             }
         }
     ],

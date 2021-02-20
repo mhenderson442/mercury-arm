@@ -155,6 +155,9 @@
                 "parameters": {
                     "resourceNamePrefix": {
                         "value": "[variables('privateDnsZoneNamePrefix')]"
+                    },
+                    "virtualNetworkId":{
+                        "value": "[reference(variables('vnetDeployment')).outputs.virtualNetworkId.value]"
                     }
                 },
                 "templateLink": {
