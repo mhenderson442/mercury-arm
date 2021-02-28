@@ -8,11 +8,8 @@
         "subnetId": {
             "value": "default"
         },
-        "instance": {
-            "value": "000"
-        },
         "ipConfigNamePrefix": {
-            "value": "blob-blob."
+            "value": "blob"
         }
     }
 }

@@ -11,9 +11,11 @@
     },
     "functions": [],
     "variables": {
-        "virtualNetworkName": "[concat(parameters('resourceNamePrefix'),'000')]",
-        "storageSubnetName": "Storage-Subnet",
-        "defaultSubnetName": "Default-Subnet"
+        "virtualNetworkName": "[parameters('resourceNamePrefix')]",
+        "storageSubnetName": "storage-subnet",
+        "defaultSubnetName": "default-subnet",
+        "cosmosDbSubnetName": "cosmos-db-subnet",
+        "appServicePlanSubnetName": "app-service-plan-subnet"
     },
     "resources": [
         {
@@ -35,12 +37,6 @@
                         "name": "[variables('defaultSubnetName')]",
                         "properties": {
                             "addressPrefix": "10.0.0.0/24",
-                            "serviceEndpoints": [
-                                {
-                                    "service": "Microsoft.Storage",
-                                    "locations": [ "northcentralus", "southcentralus" ]
-                                }
-                            ],
                             "delegations": [],
                             "privateEndpointNetworkPolicies": "Disabled",
                             "privateLinkServiceNetworkPolicies": "Disabled"
@@ -50,6 +46,22 @@
                         "name": "[variables('storageSubnetName')]",
                         "properties": {
                             "addressPrefix": "10.0.1.0/24",
+                            "privateEndpointNetworkPolicies": "Disabled",
+                            "privateLinkServiceNetworkPolicies": "Disabled"
+                        }
+                    },
+                    {
+                        "name": "[variables('cosmosDbSubnetName')]",
+                        "properties": {
+                            "addressPrefix": "10.0.2.0/24",
+                            "privateEndpointNetworkPolicies": "Disabled",
+                            "privateLinkServiceNetworkPolicies": "Disabled"
+                        }
+                    },
+                    {
+                        "name": "[variables('appServicePlanSubnetName')]",
+                        "properties": {
+                            "addressPrefix": "10.0.3.0/24",
                             "privateEndpointNetworkPolicies": "Disabled",
                             "privateLinkServiceNetworkPolicies": "Disabled"
                         }
@@ -66,6 +78,18 @@
         "storageSubnetId": {
             "type": "string",
             "value": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName')), '/subnets/', variables('storageSubnetName'))]"
+        },
+        "cosmosDbSubnetId": {
+            "type": "string",
+            "value": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName')), '/subnets/', variables('cosmosDbSubnetName'))]"
+        },
+        "appServicePlanSubnetId": {
+            "type": "string",
+            "value": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName')), '/subnets/', variables('appServicePlanSubnetName'))]"
+        },
+        "virtualNetworkName": {
+            "type": "string",
+            "value": "[variables('virtualNetworkName')]"
         }
     }
 }

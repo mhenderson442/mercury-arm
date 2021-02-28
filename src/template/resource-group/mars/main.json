@@ -38,7 +38,7 @@
                         }
                     ],
                     "output": {
-                        "value": "[concat(parameters('resourceGroupName'),'-', parameters('environment'), '-', parameters('resourceType'), '-')]",
+                        "value": "[concat(parameters('resourceGroupName'),'-', parameters('environment'), '-', parameters('resourceType'))]",
                         "type": "string"
                     }
                 },
@@ -71,17 +71,36 @@
     ],
     "variables": {
 
-        "nicStorageDeployment": "[mars.formatDeploymentName(resourceGroup().name, parameters('environment'), variables('resourceType').nic , parameters('utc'))]",
-        "nicStorageNamePrefix": "[mars.resourceNamePrefix(resourceGroup().name, parameters('environment'), variables('resourceType').nic)]",
+        "vnetDeployment": "[mars.formatDeploymentName(resourceGroup().name, parameters('environment'), variables('resourceType').virtualNetwork , parameters('utc'))]",
+        "vnetResourceNamePrefix": "[mars.resourceNamePrefix(resourceGroup().name, parameters('environment'), variables('resourceType').virtualNetwork)]",
 
         "privateDnsZoneDeployment": "[mars.formatDeploymentName(resourceGroup().name, parameters('environment'), variables('resourceType').privateDns , parameters('utc'))]",
         "privateDnsZoneNamePrefix": "[mars.resourceNamePrefix(resourceGroup().name, parameters('environment'), variables('resourceType').privateDns)]",
 
+        "storageAccountNamePrefix": "[mars.resourceNamePrefix(resourceGroup().name, parameters('environment'), variables('resourceType').storageAccount)]",
+        "storageAccountDeployment": "[mars.formatDeploymentName(resourceGroup().name, parameters('environment'), variables('resourceType').storageAccount , parameters('utc'))]",
+
+        "storagePrivateEndpointDeployment": "[mars.formatDeploymentName(resourceGroup().name, parameters('environment'), concat(variables('resourceType').privateEndpoint,'-00'), parameters('utc'))]",
+        "storagePrivateEndpointNamePrefix": "[mars.resourceNamePrefix(resourceGroup().name, parameters('environment'), variables('resourceType').privateEndpoint)]",
+
+        "appServicePlanDeployment": "[mars.formatDeploymentName(resourceGroup().name, parameters('environment'), variables('resourceType').appService , parameters('utc'))]",
+        "appServiceNamePrefix": "[mars.resourceNamePrefix(resourceGroup().name, parameters('environment'), variables('resourceType').appService)]",
+
+        // "appServicePrivateEndpointDeployment": "[mars.formatDeploymentName(resourceGroup().name, parameters('environment'), concat(variables('resourceType').privateEndpoint,'-01'), parameters('utc'))]",
+        // "appServicePrivateEndpointNamePrefix": "[mars.resourceNamePrefix(resourceGroup().name, parameters('environment'), concat(variables('resourceType').privateEndpoint,'-app-service'))]",
+
+
+        // "nicCosmosDeployment": "[mars.formatDeploymentName(resourceGroup().name, parameters('environment'), concat(variables('resourceType').nic, '-cosmos') , parameters('utc'))]",
+        // "nicCosmosNamePrefix": "[mars.resourceNamePrefix(resourceGroup().name, parameters('environment'), variables('resourceType').nic)]",
+
+
         "resourceReferenceType": {
             "storage": "storage",
             "sql": "sql",
-            "web": "web"
+            "web": "web",
+            "cosmos": "cosmos"
         },
+
         "resourceType": {
             "virtualNetwork": "vnet",
             "storageAccount": "storage",
@@ -89,20 +108,18 @@
             "privateDns": "private-dns",
             "nic": "nic",
             "privateEndpoint": "private-endpoint",
-            "cosmosDb": "cosmos-db"
-        },
+            "cosmosDb": "cosmos-db",
+            "appService": "app-service"
+        }
 
-        "storageAccountResourceNamePrefix": "[mars.resourceNamePrefix(resourceGroup().name, parameters('environment'), variables('resourceType').storageAccount)]",
-        "storageAccountDeployment": "[mars.formatDeploymentName(resourceGroup().name, parameters('environment'), variables('resourceType').storageAccount , parameters('utc'))]",
 
-        "storagePrivateEndpointDeployment": "[mars.formatDeploymentName(resourceGroup().name, parameters('environment'), variables('resourceType').privateEndpoint , parameters('utc'))]",
-        "storagePrivateEndpointNamePrefix": "[mars.resourceNamePrefix(resourceGroup().name, parameters('environment'), variables('resourceType').privateEndpoint)]",
+        // "cosmosDbPrivateEndpointDeployment": "[mars.formatDeploymentName(resourceGroup().name, parameters('environment'), concat(variables('resourceType').privateEndpoint,'-cosmos-db') , parameters('utc'))]",
+        // "cosmosDbPrivateEndpointNamePrefix": "[mars.resourceNamePrefix(resourceGroup().name, parameters('environment'), variables('resourceType').privateEndpoint)]",
 
-        "cosmosDbDeployment": "[mars.formatDeploymentName(resourceGroup().name, parameters('environment'), variables('resourceType').cosmosDb , parameters('utc'))]",
-        "cosmosDbNamePrefix": "[mars.resourceNamePrefix(resourceGroup().name, parameters('environment'), variables('resourceType').cosmosDb)]",
+        // "cosmosDbDeployment": "[mars.formatDeploymentName(resourceGroup().name, parameters('environment'), variables('resourceType').cosmosDb , parameters('utc'))]",
+        // "cosmosDbNamePrefix": "[mars.resourceNamePrefix(resourceGroup().name, parameters('environment'), variables('resourceType').cosmosDb)]",
 
-        "vnetDeployment": "[mars.formatDeploymentName(resourceGroup().name, parameters('environment'), variables('resourceType').virtualNetwork , parameters('utc'))]",
-        "vnetResourceNamePrefix": "[mars.resourceNamePrefix(resourceGroup().name, parameters('environment'), variables('resourceType').virtualNetwork)]"
+
     },
     "resources": [
         {
@@ -122,28 +139,6 @@
             }
         },
         {
-            "name": "[variables('storageAccountDeployment')]",
-            "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2020-06-01",
-            "dependsOn": [
-                "[resourceId('Microsoft.Resources/deployments', variables('vnetDeployment'))]"
-            ],
-            "properties": {
-                "mode": "Incremental",
-                "parameters": {
-                    "resourceNamePrefix": {
-                        "value": "[variables('storageAccountResourceNamePrefix')]"
-                    },
-                    "storageSubnetId": {
-                        "value": "[reference(variables('vnetDeployment')).outputs.storageSubnetId.value]"
-                    }
-                },
-                "templateLink": {
-                    "relativePath": "./storage/storage-account-template.json"
-                }
-            }
-        },
-        {
             "name": "[variables('privateDnsZoneDeployment')]",
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2020-06-01",
@@ -156,8 +151,11 @@
                     "resourceNamePrefix": {
                         "value": "[variables('privateDnsZoneNamePrefix')]"
                     },
-                    "virtualNetworkId":{
+                    "virtualNetworkId": {
                         "value": "[reference(variables('vnetDeployment')).outputs.virtualNetworkId.value]"
+                    },
+                    "virtualNetworkName": {
+                        "value": "[reference(variables('vnetDeployment')).outputs.virtualNetworkName.value]"
                     }
                 },
                 "templateLink": {
@@ -166,34 +164,47 @@
             }
         },
         {
-            "name": "[variables('nicStorageDeployment')]",
+            "name": "[variables('storageAccountDeployment')]",
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2020-06-01",
             "dependsOn": [
-                "[resourceId('Microsoft.Resources/deployments', variables('vnetDeployment'))]",
-                "[resourceId('Microsoft.Resources/deployments', variables('storageAccountDeployment'))]"
+                "[resourceId('Microsoft.Resources/deployments', variables('vnetDeployment'))]"
             ],
             "properties": {
                 "mode": "Incremental",
                 "parameters": {
-                    "resourceName": {
-                        "value": "[coalesce(variables('nicStorageNamePrefix'),variables('resourceReferenceType').storage,'000')]"
-                    },
-                    "subnetId": {
-                        "value": "[reference(variables('vnetDeployment')).outputs.storageSubnetId.value]"
-                    },
-                    "instance": {
-                        "value": "000"
-                    },
-                    "ipConfigNamePrefix": {
-                        "value": "blob-blob."
+                    "resourceNamePrefix": {
+                        "value": "[variables('storageAccountNamePrefix')]"
                     }
                 },
                 "templateLink": {
-                    "relativePath": "./nic/nic-template.json"
+                    "relativePath": "./storage/storage-account-template.json"
                 }
             }
         },
+        
+        // app service plan
+        {
+            "name": "[variables('appServicePlanDeployment')]",
+            "type": "Microsoft.Resources/deployments",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments', variables('vnetDeployment'))]"
+            ],
+            "apiVersion": "2020-06-01",
+            "properties": {
+                "mode": "Incremental",
+                "parameters": {
+                    "resourceNamePrefix": {
+                        "value": "[variables('appServiceNamePrefix')]"
+                    }
+                },
+                "templateLink": {
+                    "relativePath": "./app-service-plan/app-service-plan-web-template.json"
+                }
+            }
+        },
+
+        // Endpoints
         {
             "name": "[variables('storagePrivateEndpointDeployment')]",
             "type": "Microsoft.Resources/deployments",
@@ -208,16 +219,13 @@
                     "resourceNamePrefix": {
                         "value": "[variables('storagePrivateEndpointNamePrefix')]"
                     },
-                    "storageAccountId": {
+                    "privateLinkServiceId": {
                         "value": "[reference(variables('storageAccountDeployment')).outputs.storageAccountId.value]"
                     },
-                    "instance": {
-                        "value": "000"
+                    "linkedResourceName": {
+                        "value": "[reference(variables('storageAccountDeployment')).outputs.storageAccountName.value]"
                     },
-                    "resourceReferenceType": {
-                        "value": "[variables('resourceReferenceType').storage]"
-                    },
-                    "storageSubnetId": {
+                    "subnet": {
                         "value": "[reference(variables('vnetDeployment')).outputs.storageSubnetId.value]"
                     }
                 },
@@ -225,31 +233,149 @@
                     "relativePath": "./private-endpoint/private-endpoint-template.json"
                 }
             }
-        },
-        {
-            "name": "[variables('cosmosDbDeployment')]",
-            "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2020-06-01",
-            "properties": {
-                "mode": "Incremental",
-                "parameters": {
-                    "resourceNamePrefix": {
-                        "value": "[variables('cosmosDbNamePrefix')]"
-                    },
-                    "databaseName":{
-                        "value": "readings"
-                    }
-                },
-                "templateLink": {
-                    "relativePath": "./cosmos-db/cosmos-db-template.json"
-                }
-            }
         }
+        // {
+        //     "name": "[variables('appServicePrivateEndpointDeployment')]",
+        //     "type": "Microsoft.Resources/deployments",
+        //     "apiVersion": "2020-06-01",
+        //     "dependsOn": [
+        //         "[resourceId('Microsoft.Resources/deployments', variables('vnetDeployment'))]",
+        //         "[resourceId('Microsoft.Resources/deployments', variables('appServicePlanDeployment'))]"
+        //     ],
+        //     "properties": {
+        //         "mode": "Incremental",
+        //         "parameters": {
+        //             "resourceNamePrefix": {
+        //                 "value": "[variables('appServicePrivateEndpointNamePrefix')]"
+        //             },
+        //             "privateLinkServiceId": {
+        //                 "value": "[reference(variables('appServicePlanDeployment')).outputs.webAppId.value]"
+        //             },
+        //             "linkedResourceName": {
+        //                 "value": "[reference(variables('appServicePlanDeployment')).outputs.webAppName.value]"
+        //             },
+        //             "subnet": {
+        //                 "value": "[reference(variables('vnetDeployment')).outputs.appServicePlanSubnetId.value]"
+        //             }
+        //         },
+        //         "templateLink": {
+        //             "relativePath": "./private-endpoint/private-endpoint-template.json"
+        //         }
+        //    }
+        //}
+
+        // Cosmos Db
+        // {
+        //     "name": "[variables('cosmosDbDeployment')]",
+        //     "type": "Microsoft.Resources/deployments",
+        //     "apiVersion": "2020-06-01",
+        //     "properties": {
+        //         "mode": "Incremental",
+        //         "parameters": {
+        //             "resourceNamePrefix": {
+        //                 "value": "[variables('cosmosDbNamePrefix')]"
+        //             },
+        //             "databaseName": {
+        //                 "value": "readings"
+        //             }
+        //         },
+        //         "templateLink": {
+        //             "relativePath": "./cosmos-db/cosmos-db-template.json"
+        //         }
+        //     }
+        // }
+
+        // {
+        //     "name": "[variables('nicCosmosDeployment')]",
+        //     "type": "Microsoft.Resources/deployments",
+        //     "apiVersion": "2020-06-01",
+        //     "dependsOn": [
+        //         "[resourceId('Microsoft.Resources/deployments', variables('vnetDeployment'))]",
+        //         "[resourceId('Microsoft.Resources/deployments', variables('cosmosDbDeployment'))]"
+        //     ],
+        //     "properties": {
+        //         "mode": "Incremental",
+        //         "parameters": {
+        //             "resourceName": {
+        //                 "value": "[coalesce(variables('nicCosmosNamePrefix'),variables('resourceReferenceType').cosmos,'000')]"
+        //             },
+        //             "subnetId": {
+        //                 "value": "[reference(variables('vnetDeployment')).outputs.cosmosDbSubnetId.value]"
+        //             },
+        //             "instance": {
+        //                 "value": "000"
+        //             },
+        //             "ipConfigNamePrefix": {
+        //                 "value": "cosmos-cosmos."
+        //             }
+        //         },
+        //         "templateLink": {
+        //             "relativePath": "./nic/nic-template.json"
+        //         }
+        //     }
+        // },
+        // {
+        //     "name": "[variables('cosmosDbPrivateEndpointDeployment')]",
+        //     "type": "Microsoft.Resources/deployments",
+        //     "apiVersion": "2020-06-01",
+        //     "dependsOn": [
+        //         "[resourceId('Microsoft.Resources/deployments', variables('vnetDeployment'))]",
+        //         "[resourceId('Microsoft.Resources/deployments', variables('cosmosDbDeployment'))]"
+        //     ],
+        //     "properties": {
+        //         "mode": "Incremental",
+        //         "parameters": {
+        //             "resourceNamePrefix": {
+        //                 "value": "[variables('cosmosDbPrivateEndpointNamePrefix')]"
+        //             },
+        //             "privateLinkServiceId": {
+        //                 "value": "[reference(variables('cosmosDbDeployment')).outputs.cosmosDbRescourceId.value]"
+        //             },
+        //             "instance": {
+        //                 "value": "000"
+        //             },
+        //             "resourceReferenceType": {
+        //                 "value": "[variables('resourceReferenceType').cosmos]"
+        //             },
+        //             "subnet": {
+        //                 "value": "[reference(variables('vnetDeployment')).outputs.cosmosDbSubnetId.value]"
+        //             },
+        //             "groupId": {
+        //                 "value": "cosmos"
+        //             }
+        //         },
+        //         "templateLink": {
+        //             "relativePath": "./private-endpoint/private-endpoint-template.json"
+        //         }
+        //     }
+        // }
+
+
     ],
     "outputs": {
-        "cosmosDbRescourceId": {
+        "virtualNetworkId": {
             "type": "string",
-            "value": "[reference(variables('cosmosDbDeployment')).outputs.cosmosDbRescourceId.value]"
+            "value": "[reference(variables('vnetDeployment')).outputs.virtualNetworkId.value]"
+        },
+        "storageSubnetId": {
+            "type": "string",
+            "value": "[reference(variables('vnetDeployment')).outputs.storageSubnetId.value]"
+        },
+        "cosmosDbSubnetId": {
+            "type": "string",
+            "value": "[reference(variables('vnetDeployment')).outputs.cosmosDbSubnetId.value]"
+        },
+        "appServicePlanSubnetId": {
+            "type": "string",
+            "value": "[reference(variables('vnetDeployment')).outputs.appServicePlanSubnetId.value]"
+        },
+        "virtualNetworkName": {
+            "type": "string",
+            "value": "[reference(variables('vnetDeployment')).outputs.virtualNetworkName.value]"
+        },
+        "storageAccountId": {
+            "type": "string",
+            "value": "[reference(variables('storageAccountDeployment')).outputs.storageAccountId.value]"
         }
     }
 }

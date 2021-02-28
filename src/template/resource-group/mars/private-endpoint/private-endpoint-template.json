@@ -3,42 +3,26 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "resourceNamePrefix": {
-            "type": "string",
-            "metadata": {
-                "description": "Resource name prefix"
-            }
+            "type": "string"
         },
-        "storageAccountId": {
-            "type": "string",
-            "metadata": {
-                "description": "Storeage account resource Id."
-            }
+        "privateLinkServiceId": {
+            "type": "string"
         },
-        "storageSubnetId": {
-            "type": "string",
-            "metadata": {
-                "description": "Storage subnet resource id."
-            }
+        "subnet": {
+            "type": "string"
         },
-        "instance": {
+        "linkedResourceName": {
             "type": "string",
-            "metadata": {
-                "description": "Instance iteration reference"
-            },
             "defaultValue": "000"
         },
-        "resourceReferenceType": {
+        "groupId": {
             "type": "string",
-            "metadata": {
-                "description": "Resource type references in the link."
-            },
-            "allowedValues": [ "storage", "web", "sql" ],
-            "defaultValue": "storage"
+            "defaultValue": "blob"
         }
     },
     "functions": [],
     "variables": {
-        "resourceName": "[concat(parameters('resourceNamePrefix'), parameters('resourceReferenceType'),'-', parameters('instance'))]"
+        "resourceName": "[concat(parameters('resourceNamePrefix'),'-', parameters('linkedResourceName'))]"
     },
     "resources": [
         {
@@ -51,9 +35,9 @@
                     {
                         "name": "[variables('resourceName')]",
                         "properties": {
-                            "privateLinkServiceId": "[parameters('storageAccountId')]",
+                            "privateLinkServiceId": "[parameters('privateLinkServiceId')]",
                             "groupIds": [
-                                "blob"
+                                "[parameters('groupId')]"
                             ],
                             "privateLinkServiceConnectionState": {
                                 "status": "Approved",
@@ -65,11 +49,20 @@
                 ],
                 "manualPrivateLinkServiceConnections": [],
                 "subnet": {
-                    "id": "[parameters('storageSubnetId')]"
+                    "id": "[parameters('subnet')]"
                 },
                 "customDnsConfigs": []
             }
         }
     ],
-    "outputs": {}
+    "outputs": {
+        "privateEndpointId": {
+            "type": "string",
+            "value": "[resourceId('Microsoft.Network/privateEndpoints', variables('resourceName'))]"
+        },
+        "linkedEndpointName": {
+            "type": "string",
+            "value": "[variables('resourceName')]"
+        }
+    }
 }

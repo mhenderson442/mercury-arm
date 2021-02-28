@@ -5,16 +5,13 @@
         "resourceNamePrefix": {
             "value": "default"
         },
-        "instance": {
+        "linkedResourceName": {
             "value": "000"
         },
-        "resourceReferenceType": {
-            "value": "storage"
-        },
-        "storageAccountId": {
+        "privateLinkServiceId": {
             "value": "default"
         },
-        "storageSubnetId": {
+        "subnet": {
             "value": "default"
         }
     }

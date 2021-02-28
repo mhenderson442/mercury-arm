@@ -3,21 +3,18 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "resourceNamePrefix": {
-            "type": "string",
-            "metadata": {
-                "description": "Private DNS name prefix."
-            }
+            "type": "string"
         },
         "virtualNetworkId": {
-            "type": "string",
-            "metadata": {
-                "description": "description"
-            }
+            "type": "string"
+        },
+        "virtualNetworkName": {
+            "type": "string"
         }
     },
     "functions": [],
     "variables": {
-        "privateDnsZoneName": "[concat(parameters('resourceNamePrefix'),'000.blob.core.windows.net')]"
+        "privateDnsZoneName": "[replace(parameters('resourceNamePrefix'),'-','.')]"
     },
     "resources": [
         {
@@ -42,7 +39,7 @@
                 "[resourceId('Microsoft.Network/privateDnsZones', variables('privateDnsZoneName'))]"
             ],
             "location": "global",
-            "name": "[concat(variables('privateDnsZoneName'), '/mars-devl-venet-link')]",
+            "name": "[concat(variables('privateDnsZoneName'), '/' , parameters('virtualNetworkName') ,'-link')]",
             "properties": {
                 "registrationEnabled": true,
                 "virtualNetwork": {
@@ -52,7 +49,7 @@
         }
     ],
     "outputs": {
-        "privateDnsId": {
+        "privateDnsZoneId": {
             "type": "string",
             "value": "[resourceId('Microsoft.Network/privateDnsZones', variables('privateDnsZoneName'))]"
         }

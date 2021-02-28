@@ -1,0 +1,76 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "resourceNamePrefix": {
+            "type": "string",
+            "metadata": {
+                "description": "App aervice plan name prefix."
+            }
+        }
+
+    },
+    "functions": [],
+    "variables": {
+        "appServicePlanName": "[concat(parameters('resourceNamePrefix'),'-asp-000')]",
+        "webAppName": "[concat(resourceGroup().name,'-web')]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Web/serverfarms",
+            "apiVersion": "2018-02-01",
+            "location": "[resourceGroup().location]",
+            "name": "[variables('appServicePlanName')]",
+            "kind": "linux",
+            "properties": {
+                "name": "[variables('appServicePlanName')]",
+                "workerSize": "0",
+                "workerSizeId": "0",
+                "numberOfWorkers": "1",
+                "reserved": true
+            },
+            "sku": {
+                "tier": "PremiumV2",
+                "name": "P1v2"
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites",
+            "apiVersion": "2018-11-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]"
+            ],
+            "location": "[resourceGroup().location]",
+            "name": "[variables('webAppName')]",
+            "kind": "app,linux",
+            "properties": {
+                "name": "[variables('webAppName')]",
+                "siteConfig": {
+                    "appSettings": [],
+                    "linuxFxVersion": "DOTNETCORE|5.0",
+                    "alwaysOn": false
+                },
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms',variables('appServicePlanName'))]",
+                "clientAffinityEnabled": false
+            }
+        }
+    ],
+    "outputs": {
+        "appServicePlanId": {
+            "type": "string",
+            "value": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]"
+        },
+        "appServicePlanName": {
+            "type": "string",
+            "value": "[variables('appServicePlanName')]"
+        },
+        "webAppId": {
+            "type": "string",
+            "value": "[resourceId('Microsoft.Web/sites',variables('webAppName'))]"
+        },
+        "webAppName": {
+            "type": "string",
+            "value": "[variables('webAppName')]"
+        }
+    }
+}

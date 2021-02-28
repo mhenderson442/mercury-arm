@@ -7,6 +7,9 @@
         },
         "virtualNetworkId": {
             "value": "default" 
+        },
+        "virtualNetworkName": {
+            "value": "default" 
         }
     }
 }

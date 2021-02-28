@@ -9,37 +9,23 @@
             }
         },
         "subnetId": {
-            "type": "string",
-            "metadata": {
-                "description": "Subnet resource id/"
-            }
-        },
-        "instance": {
-            "type": "string",
-            "metadata": {
-                "description": "Instance designator"
-            },
-            "defaultValue": "000"
+            "type": "string"
         },
         "ipConfigNamePrefix": {
             "type": "string",
-            "metadata": {
-                "description": "IP configuration name prefix."
-            },
-            "defaultValue": "blob-blob."
+            "defaultValue": "blob."
         }
     },
     "functions": [],
     "variables": {
-        "ipConfigName": "[concat(parameters('ipConfigNamePrefix'), parameters('resourceName'), parameters('instance'))]",
-        "resourceName": "[concat(parameters('resourceName'),parameters('instance'))]"
+        "ipConfigName": "[concat(parameters('ipConfigNamePrefix'),'-', parameters('resourceName'))]"
     },
     "resources": [
         {
             "type": "Microsoft.Network/networkInterfaces",
             "apiVersion": "2020-05-01",
             "location": "[resourceGroup().location]",
-            "name": "[variables('resourceName')]",
+            "name": "[parameters('resourceName')]",
             "properties": {
                 "ipConfigurations": [
                     {
