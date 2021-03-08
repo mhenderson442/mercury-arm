@@ -17,8 +17,8 @@
     },
     "functions": [],
     "variables": {
-        "accountName": "[concat(parameters('resourceNamePrefix'),'000')]",
-        "databaseResourceName": "[concat(variables('accountName'), '/', parameters('databaseName'))]"
+        "accountName": "[concat(parameters('resourceNamePrefix'),'-000')]",
+        "databaseName": "[concat(variables('accountName'), '/', parameters('databaseName'))]"
     },
     "resources": [
         {
@@ -46,7 +46,7 @@
         },
         {
             "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases",
-            "name": "[variables('databaseResourceName')]",
+            "name": "[variables('databaseName')]",
             "apiVersion": "2020-06-01-preview",
             "dependsOn": [
                 "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('accountName'))]"
@@ -59,12 +59,56 @@
                     "throughput": 400
                 }
             }
+        },
+        {
+            "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers",
+            "apiVersion": "2020-06-01-preview",
+            "name": "[concat(variables('accountName'), '/readings/account')]",
+            "properties": {
+                "options": {
+                    "throughput": 400
+                },
+                "resource": {
+                    "id": "account",
+                    "indexingPolicy": {
+                        "indexingMode": "consistent",
+                        "automatic": true,
+                        "includedPaths": [
+                            {
+                                "path": "/*"
+                            }
+                        ],
+                        "excludedPaths": [
+                            {
+                                "path": "/\"_etag\"/?"
+                            }
+                        ]
+                    },
+                    "partitionKey": {
+                        "paths": [
+                            "/sensor"
+                        ],
+                        "kind": "Hash"
+                    },
+                    "uniqueKeyPolicy": {
+                        "uniqueKeys": []
+                    },
+                    "conflictResolutionPolicy": {
+                        "mode": "LastWriterWins",
+                        "conflictResolutionPath": "/_ts"
+                    }
+                }
+            }
         }
     ],
     "outputs": {
         "cosmosDbRescourceId": {
             "type": "string",
             "value": "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('accountName'))]"
+        },
+        "accountName": {
+            "type": "string",
+            "value": "[variables('accountName')]"
         }
     }
 }

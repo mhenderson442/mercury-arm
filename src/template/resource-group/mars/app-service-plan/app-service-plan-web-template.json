@@ -43,6 +43,9 @@
             "location": "[resourceGroup().location]",
             "name": "[variables('webAppName')]",
             "kind": "app,linux",
+            "identity": {
+                "type": "SystemAssigned"
+            },
             "properties": {
                 "name": "[variables('webAppName')]",
                 "siteConfig": {
